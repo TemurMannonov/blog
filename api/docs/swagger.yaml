@@ -12,7 +12,10 @@ definitions:
   models.CreateCategoryRequest:
     properties:
       title:
+        maxLength: 100
         type: string
+    required:
+    - title
     type: object
   models.CreatePostRequest:
     properties:
@@ -32,26 +35,65 @@ definitions:
       email:
         type: string
       first_name:
+        maxLength: 30
+        minLength: 2
         type: string
       gender:
+        enum:
+        - male
+        - female
         type: string
       last_name:
+        maxLength: 30
+        minLength: 2
         type: string
       password:
+        maxLength: 16
+        minLength: 6
         type: string
       phone_number:
         type: string
       profile_image_url:
         type: string
       type:
+        enum:
+        - superadmin
+        - user
         type: string
       username:
+        maxLength: 30
+        minLength: 2
         type: string
+    required:
+    - email
+    - first_name
+    - last_name
+    - password
+    - type
+    - username
     type: object
   models.ErrorResponse:
     properties:
       error:
         type: string
+    type: object
+  models.GetAllCategoriesResponse:
+    properties:
+      categories:
+        items:
+          $ref: '#/definitions/models.Category'
+        type: array
+      count:
+        type: integer
+    type: object
+  models.GetAllUsersResponse:
+    properties:
+      categories:
+        items:
+          $ref: '#/definitions/models.User'
+        type: array
+      count:
+        type: integer
     type: object
   models.Post:
     properties:
@@ -105,6 +147,38 @@ info:
   version: "1.0"
 paths:
   /categories:
+    get:
+      consumes:
+      - application/json
+      description: Get all categories
+      parameters:
+      - default: 10
+        in: query
+        name: limit
+        required: true
+        type: integer
+      - default: 1
+        in: query
+        name: page
+        required: true
+        type: integer
+      - in: query
+        name: search
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.GetAllCategoriesResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      summary: Get all categories
+      tags:
+      - category
     post:
       consumes:
       - application/json
@@ -207,6 +281,38 @@ paths:
       tags:
       - post
   /users:
+    get:
+      consumes:
+      - application/json
+      description: Get all users
+      parameters:
+      - default: 10
+        in: query
+        name: limit
+        required: true
+        type: integer
+      - default: 1
+        in: query
+        name: page
+        required: true
+        type: integer
+      - in: query
+        name: search
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.GetAllUsersResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      summary: Get all users
+      tags:
+      - user
     post:
       consumes:
       - application/json

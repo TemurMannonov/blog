@@ -9,5 +9,10 @@ type Category struct {
 }
 
 type CreateCategoryRequest struct {
-	Title string `json:"title"`
+	Title string `json:"title" binding:"required,max=100"`
+}
+
+type GetAllCategoriesResponse struct {
+	Categories []*Category `json:"categories"`
+	Count      int32       `json:"count"`
 }

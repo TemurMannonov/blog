@@ -1,6 +1,8 @@
 package postgres
 
 import (
+	"fmt"
+
 	"github.com/TemurMannonov/blog/storage/repo"
 	"github.com/jmoiron/sqlx"
 )
@@ -89,6 +91,82 @@ func (ur *userRepo) Get(id int64) (*repo.User, error) {
 		&result.Type,
 		&result.CreatedAt,
 	)
+	if err != nil {
+		return nil, err
+	}
+
+	return &result, nil
+}
+
+func (ur *userRepo) GetAll(params *repo.GetAllUsersParams) (*repo.GetAllUsersResult, error) {
+	result := repo.GetAllUsersResult{
+		Users: make([]*repo.User, 0),
+	}
+
+	offset := (params.Page - 1) * params.Limit
+
+	limit := fmt.Sprintf(" LIMIT %d OFFSET %d ", params.Limit, offset)
+
+	filter := ""
+	if params.Search != "" {
+		str := "%" + params.Search + "%"
+		filter += fmt.Sprintf(`
+			WHERE first_name ILIKE '%s' OR last_name ILIKE '%s' OR email ILIKE '%s' 
+				OR username ILIKE '%s' OR phone_number ILIKE '%s'`,
+			str, str, str, str, str,
+		)
+	}
+
+	query := `
+		SELECT
+			id,
+			first_name,
+			last_name,
+			phone_number,
+			email,
+			gender,
+			password,
+			username,
+			profile_image_url,
+			type,
+			created_at
+		FROM users
+		` + filter + `
+		ORDER BY created_at desc
+		` + limit
+
+	rows, err := ur.db.Query(query)
+	if err != nil {
+		return nil, err
+	}
+
+	defer rows.Close()
+
+	for rows.Next() {
+		var u repo.User
+
+		err := rows.Scan(
+			&u.ID,
+			&u.FirstName,
+			&u.LastName,
+			&u.PhoneNumber,
+			&u.Email,
+			&u.Gender,
+			&u.Password,
+			&u.Username,
+			&u.ProfileImageUrl,
+			&u.Type,
+			&u.CreatedAt,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		result.Users = append(result.Users, &u)
+	}
+
+	queryCount := `SELECT count(1) FROM users ` + filter
+	err = ur.db.QueryRow(queryCount).Scan(&result.Count)
 	if err != nil {
 		return nil, err
 	}
