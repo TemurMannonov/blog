@@ -30,6 +30,8 @@ func New(opt *RouterOptions) *gin.Engine {
 		Storage: opt.Storage,
 	})
 
+	router.Static("/media", "./media")
+
 	apiV1 := router.Group("/v1")
 
 	apiV1.GET("/users/:id", handlerV1.GetUser)
@@ -42,6 +44,11 @@ func New(opt *RouterOptions) *gin.Engine {
 
 	apiV1.GET("/posts/:id", handlerV1.GetPost)
 	apiV1.POST("/posts", handlerV1.CreatePost)
+	apiV1.GET("/posts", handlerV1.GetAllPosts)
+
+	apiV1.POST("/auth/register", handlerV1.Register)
+
+	apiV1.POST("/file-upload", handlerV1.UploadFile)
 
 	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
