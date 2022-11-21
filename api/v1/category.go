@@ -38,6 +38,7 @@ func (h *handlerV1) GetCategory(c *gin.Context) {
 	})
 }
 
+// @Security ApiKeyAuth
 // @Router /categories [post]
 // @Summary Create a category
 // @Description Create a category

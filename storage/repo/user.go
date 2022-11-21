@@ -35,5 +35,6 @@ type GetAllUsersResult struct {
 type UserStorageI interface {
 	Create(u *User) (*User, error)
 	Get(id int64) (*User, error)
+	GetByEmail(email string) (*User, error)
 	GetAll(params *GetAllUsersParams) (*GetAllUsersResult, error)
 }

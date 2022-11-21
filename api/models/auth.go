@@ -10,7 +10,7 @@ type RegisterRequest struct {
 	Password  string `json:"password" binding:"required,min=6,max=16"`
 }
 
-type RegisterResponse struct {
+type AuthResponse struct {
 	ID          int64     `json:"id"`
 	FirstName   string    `json:"first_name"`
 	LastName    string    `json:"last_name"`
@@ -19,4 +19,9 @@ type RegisterResponse struct {
 	Type        string    `json:"type"`
 	CreatedAt   time.Time `json:"created_at"`
 	AccessToken string    `json:"access_token"`
+}
+
+type LoginRequest struct {
+	Email    string `json:"email" binding:"required,email"`
+	Password string `json:"password" binding:"required,min=6,max=16"`
 }

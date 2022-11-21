@@ -34,6 +34,7 @@ func (h *handlerV1) GetUser(c *gin.Context) {
 	c.JSON(http.StatusOK, parseUserModel(resp))
 }
 
+// @Security ApiKeyAuth
 // @Router /users [post]
 // @Summary Create a user
 // @Description Create a user
@@ -73,6 +74,7 @@ func (h *handlerV1) CreateUser(c *gin.Context) {
 	c.JSON(http.StatusCreated, parseUserModel(resp))
 }
 
+// @Security ApiKeyAuth
 // @Router /users [get]
 // @Summary Get all users
 // @Description Get all users

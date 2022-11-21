@@ -173,3 +173,44 @@ func (ur *userRepo) GetAll(params *repo.GetAllUsersParams) (*repo.GetAllUsersRes
 
 	return &result, nil
 }
+
+func (ur *userRepo) GetByEmail(email string) (*repo.User, error) {
+	var result repo.User
+
+	query := `
+		SELECT
+			id,
+			first_name,
+			last_name,
+			phone_number,
+			email,
+			gender,
+			password,
+			username,
+			profile_image_url,
+			type,
+			created_at
+		FROM users
+		WHERE email=$1
+	`
+
+	row := ur.db.QueryRow(query, email)
+	err := row.Scan(
+		&result.ID,
+		&result.FirstName,
+		&result.LastName,
+		&result.PhoneNumber,
+		&result.Email,
+		&result.Gender,
+		&result.Password,
+		&result.Username,
+		&result.ProfileImageUrl,
+		&result.Type,
+		&result.CreatedAt,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return &result, nil
+}
