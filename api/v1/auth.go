@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/TemurMannonov/blog/api/models"
+	"github.com/TemurMannonov/blog/pkg/email"
 	"github.com/TemurMannonov/blog/pkg/utils"
 	"github.com/TemurMannonov/blog/storage/repo"
 	"github.com/gin-gonic/gin"
@@ -58,6 +59,19 @@ func (h *handlerV1) Register(c *gin.Context) {
 		Username: result.Username,
 		Email:    result.Email,
 		Duration: time.Hour * 24,
+	})
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+
+	err = email.SendEmail(h.cfg, &email.SendEmailRequest{
+		To:      []string{result.Email},
+		Subject: "Verification email",
+		Body: map[string]string{
+			"code": "123123",
+		},
+		Type: email.VerificationEmail,
 	})
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, errorResponse(err))
