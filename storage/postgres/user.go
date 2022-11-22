@@ -60,17 +60,8 @@ func (ur *userRepo) Create(user *repo.User) (*repo.User, error) {
 }
 
 func (ur *userRepo) Activate(id int64) error {
-	query := `
-		UPDATE users SET
-			is_active=true
-		WHERE id=$1
-	`
-
-	_, err := ur.db.Exec(
-		query,
-		id,
-	)
-
+	query := `UPDATE users SET is_active=true WHERE id=$1`
+	_, err := ur.db.Exec(query, id)
 	if err != nil {
 		return err
 	}

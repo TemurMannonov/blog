@@ -3,6 +3,7 @@ package v1
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -13,7 +14,10 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-var ErrWrongEmailOrPass = errors.New("wrong email or password")
+var (
+	ErrWrongEmailOrPass = errors.New("wrong email or password")
+	ErrUserNotVerified  = errors.New("user not verified")
+)
 
 // @Router /auth/register [post]
 // @Summary Register a user
@@ -22,7 +26,7 @@ var ErrWrongEmailOrPass = errors.New("wrong email or password")
 // @Accept json
 // @Produce json
 // @Param data body models.RegisterRequest true "Data"
-// @Success 200 {object} models.AuthResponse
+// @Success 200 {object} models.ResponseOK
 // @Failure 500 {object} models.ErrorResponse
 func (h *handlerV1) Register(c *gin.Context) {
 	var (
@@ -48,16 +52,75 @@ func (h *handlerV1) Register(c *gin.Context) {
 		Username:  req.Username,
 		Type:      repo.UserTypeUser,
 		Password:  hashedPassword,
+		IsActive:  false,
 	})
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, errorResponse(err))
 		return
 	}
 
+	go func() {
+		err = email.SendEmail(h.cfg, &email.SendEmailRequest{
+			To:      []string{result.Email},
+			Subject: "Verification email",
+			Body: map[string]string{
+				"code": "123123",
+			},
+			Type: email.VerificationEmail,
+		})
+		if err != nil {
+			fmt.Println("Failed to send email")
+		}
+	}()
+
+	c.JSON(http.StatusCreated, models.ResponseOK{
+		Message: "Verification code has been sent!",
+	})
+}
+
+// @Router /auth/verify [post]
+// @Summary Verify user
+// @Description Verify user
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Param data body models.VerifyRequest true "Data"
+// @Success 200 {object} models.AuthResponse
+// @Failure 500 {object} models.ErrorResponse
+func (h *handlerV1) Verify(c *gin.Context) {
+	var (
+		req models.VerifyRequest
+	)
+
+	err := c.ShouldBindJSON(&req)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+
+	user, err := h.storage.User().GetByEmail(req.Email)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			c.JSON(http.StatusNotFound, errorResponse(err))
+			return
+		}
+
+		c.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+
+	// TODO: check verification code
+
+	err = h.storage.User().Activate(user.ID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+
 	token, _, err := utils.CreateToken(&utils.TokenParams{
-		UserID:   result.ID,
-		Username: result.Username,
-		Email:    result.Email,
+		UserID:   user.ID,
+		Username: user.Username,
+		Email:    user.Email,
 		Duration: time.Hour * 24,
 	})
 	if err != nil {
@@ -65,27 +128,14 @@ func (h *handlerV1) Register(c *gin.Context) {
 		return
 	}
 
-	err = email.SendEmail(h.cfg, &email.SendEmailRequest{
-		To:      []string{result.Email},
-		Subject: "Verification email",
-		Body: map[string]string{
-			"code": "123123",
-		},
-		Type: email.VerificationEmail,
-	})
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, errorResponse(err))
-		return
-	}
-
 	c.JSON(http.StatusCreated, models.AuthResponse{
-		ID:          result.ID,
-		FirstName:   result.FirstName,
-		LastName:    result.LastName,
-		Email:       result.Email,
-		Username:    result.Username,
-		Type:        result.Type,
-		CreatedAt:   result.CreatedAt,
+		ID:          user.ID,
+		FirstName:   user.FirstName,
+		LastName:    user.LastName,
+		Email:       user.Email,
+		Username:    user.Username,
+		Type:        user.Type,
+		CreatedAt:   user.CreatedAt,
 		AccessToken: token,
 	})
 }
@@ -119,6 +169,10 @@ func (h *handlerV1) Login(c *gin.Context) {
 
 		c.JSON(http.StatusInternalServerError, errorResponse(err))
 		return
+	}
+
+	if !result.IsActive {
+		c.JSON(http.StatusForbidden, errorResponse(ErrUserNotVerified))
 	}
 
 	err = utils.CheckPassword(req.Password, result.Password)
