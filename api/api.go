@@ -13,8 +13,9 @@ import (
 )
 
 type RouterOptions struct {
-	Cfg     *config.Config
-	Storage storage.StorageI
+	Cfg      *config.Config
+	Storage  storage.StorageI
+	InMemory storage.InMemoryStorageI
 }
 
 // @title           Swagger for blog api
@@ -30,8 +31,9 @@ func New(opt *RouterOptions) *gin.Engine {
 	router := gin.Default()
 
 	handlerV1 := v1.New(&v1.HandlerV1Options{
-		Cfg:     opt.Cfg,
-		Storage: opt.Storage,
+		Cfg:      opt.Cfg,
+		Storage:  opt.Storage,
+		InMemory: opt.InMemory,
 	})
 
 	router.Static("/media", "./media")

@@ -17,6 +17,8 @@ import (
 var (
 	ErrWrongEmailOrPass = errors.New("wrong email or password")
 	ErrUserNotVerified  = errors.New("user not verified")
+	ErrIncorrectCode    = errors.New("incorrect verification code")
+	ErrCodeExpired      = errors.New("verification code has been expired")
 )
 
 // @Router /auth/register [post]
@@ -60,16 +62,28 @@ func (h *handlerV1) Register(c *gin.Context) {
 	}
 
 	go func() {
+		code, err := utils.GenerateRandomCode(6)
+		if err != nil {
+			fmt.Println("failed generate random code")
+			return
+		}
+
+		err = h.inMemory.Set(result.Email, code, time.Minute)
+		if err != nil {
+			fmt.Println("failed save code")
+			return
+		}
+
 		err = email.SendEmail(h.cfg, &email.SendEmailRequest{
 			To:      []string{result.Email},
 			Subject: "Verification email",
 			Body: map[string]string{
-				"code": "123123",
+				"code": code,
 			},
 			Type: email.VerificationEmail,
 		})
 		if err != nil {
-			fmt.Println("Failed to send email")
+			fmt.Println("failed to send email")
 		}
 	}()
 
@@ -109,7 +123,16 @@ func (h *handlerV1) Verify(c *gin.Context) {
 		return
 	}
 
-	// TODO: check verification code
+	code, err := h.inMemory.Get(user.Email)
+	if err != nil {
+		c.JSON(http.StatusForbidden, errorResponse(ErrCodeExpired))
+		return
+	}
+
+	if req.Code != code {
+		c.JSON(http.StatusForbidden, errorResponse(ErrIncorrectCode))
+		return
+	}
 
 	err = h.storage.User().Activate(user.ID)
 	if err != nil {

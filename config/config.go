@@ -9,6 +9,7 @@ type Config struct {
 	HttpPort string
 	Postgres PostgresConfig
 	Smtp     Smtp
+	Redis    Redis
 }
 
 type PostgresConfig struct {
@@ -22,6 +23,10 @@ type PostgresConfig struct {
 type Smtp struct {
 	Sender   string
 	Password string
+}
+
+type Redis struct {
+	Addr string
 }
 
 func Load(path string) Config {
@@ -42,6 +47,9 @@ func Load(path string) Config {
 		Smtp: Smtp{
 			Sender:   conf.GetString("SMTP_SENDER"),
 			Password: conf.GetString("SMTP_PASSWORD"),
+		},
+		Redis: Redis{
+			Addr: conf.GetString("REDIS_ADDR"),
 		},
 	}
 

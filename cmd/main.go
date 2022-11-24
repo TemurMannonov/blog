@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/go-redis/redis/v9"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
 
@@ -28,11 +29,17 @@ func main() {
 		log.Fatalf("failed to connect database: %v", err)
 	}
 
+	rdb := redis.NewClient(&redis.Options{
+		Addr: cfg.Redis.Addr,
+	})
+
 	strg := storage.NewStoragePg(psqlConn)
+	inMemory := storage.NewInMemoryStorage(rdb)
 
 	apiServer := api.New(&api.RouterOptions{
-		Cfg:     &cfg,
-		Storage: strg,
+		Cfg:      &cfg,
+		Storage:  strg,
+		InMemory: inMemory,
 	})
 
 	err = apiServer.Run(cfg.HttpPort)
