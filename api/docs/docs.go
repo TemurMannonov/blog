@@ -676,8 +676,7 @@ const docTemplate = `{
                 "first_name",
                 "last_name",
                 "password",
-                "type",
-                "username"
+                "type"
             ],
             "properties": {
                 "email": {
@@ -719,9 +718,7 @@ const docTemplate = `{
                     ]
                 },
                 "username": {
-                    "type": "string",
-                    "maxLength": 30,
-                    "minLength": 2
+                    "type": "string"
                 }
             }
         },
@@ -830,8 +827,7 @@ const docTemplate = `{
                 "email",
                 "first_name",
                 "last_name",
-                "password",
-                "username"
+                "password"
             ],
             "properties": {
                 "email": {
@@ -851,11 +847,6 @@ const docTemplate = `{
                     "type": "string",
                     "maxLength": 16,
                     "minLength": 6
-                },
-                "username": {
-                    "type": "string",
-                    "maxLength": 30,
-                    "minLength": 2
                 }
             }
         },

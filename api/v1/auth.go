@@ -2,13 +2,14 @@ package v1
 
 import (
 	"database/sql"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
 	"time"
 
 	"github.com/TemurMannonov/blog/api/models"
-	"github.com/TemurMannonov/blog/pkg/email"
+	emailPkg "github.com/TemurMannonov/blog/pkg/email"
 	"github.com/TemurMannonov/blog/pkg/utils"
 	"github.com/TemurMannonov/blog/storage/repo"
 	"github.com/gin-gonic/gin"
@@ -16,6 +17,7 @@ import (
 
 var (
 	ErrWrongEmailOrPass = errors.New("wrong email or password")
+	ErrEmailExists      = errors.New("email already exists")
 	ErrUserNotVerified  = errors.New("user not verified")
 	ErrIncorrectCode    = errors.New("incorrect verification code")
 	ErrCodeExpired      = errors.New("verification code has been expired")
@@ -41,55 +43,74 @@ func (h *handlerV1) Register(c *gin.Context) {
 		return
 	}
 
+	_, err = h.storage.User().GetByEmail(req.Email)
+	if !errors.Is(err, sql.ErrNoRows) {
+		c.JSON(http.StatusBadRequest, errorResponse(ErrEmailExists))
+		return
+	}
+
 	hashedPassword, err := utils.HashPassword(req.Password)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, errorResponse(err))
 		return
 	}
 
-	result, err := h.storage.User().Create(&repo.User{
+	user := repo.User{
 		FirstName: req.FirstName,
 		LastName:  req.LastName,
 		Email:     req.Email,
-		Username:  req.Username,
 		Type:      repo.UserTypeUser,
 		Password:  hashedPassword,
-		IsActive:  false,
-	})
+	}
+
+	userData, err := json.Marshal(user)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+
+	err = h.inMemory.Set("user_"+user.Email, string(userData), 10*time.Minute)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, errorResponse(err))
 		return
 	}
 
 	go func() {
-		code, err := utils.GenerateRandomCode(6)
+		err := h.sendVerificationCode(req.Email)
 		if err != nil {
-			fmt.Println("failed generate random code")
-			return
-		}
-
-		err = h.inMemory.Set(result.Email, code, time.Minute)
-		if err != nil {
-			fmt.Println("failed save code")
-			return
-		}
-
-		err = email.SendEmail(h.cfg, &email.SendEmailRequest{
-			To:      []string{result.Email},
-			Subject: "Verification email",
-			Body: map[string]string{
-				"code": code,
-			},
-			Type: email.VerificationEmail,
-		})
-		if err != nil {
-			fmt.Println("failed to send email")
+			fmt.Printf("failed to send verification code: %v", err)
 		}
 	}()
 
 	c.JSON(http.StatusCreated, models.ResponseOK{
 		Message: "Verification code has been sent!",
 	})
+}
+
+func (h *handlerV1) sendVerificationCode(email string) error {
+	code, err := utils.GenerateRandomCode(6)
+	if err != nil {
+		return err
+	}
+
+	err = h.inMemory.Set("code_"+email, code, time.Minute)
+	if err != nil {
+		return err
+	}
+
+	err = emailPkg.SendEmail(h.cfg, &emailPkg.SendEmailRequest{
+		To:      []string{email},
+		Subject: "Verification email",
+		Body: map[string]string{
+			"code": code,
+		},
+		Type: emailPkg.VerificationEmail,
+	})
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // @Router /auth/verify [post]
@@ -112,18 +133,20 @@ func (h *handlerV1) Verify(c *gin.Context) {
 		return
 	}
 
-	user, err := h.storage.User().GetByEmail(req.Email)
+	userData, err := h.inMemory.Get("user_" + req.Email)
 	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			c.JSON(http.StatusNotFound, errorResponse(err))
-			return
-		}
-
-		c.JSON(http.StatusInternalServerError, errorResponse(err))
+		c.JSON(http.StatusForbidden, errorResponse(err))
 		return
 	}
 
-	code, err := h.inMemory.Get(user.Email)
+	var user repo.User
+	err = json.Unmarshal([]byte(userData), &user)
+	if err != nil {
+		c.JSON(http.StatusForbidden, errorResponse(err))
+		return
+	}
+
+	code, err := h.inMemory.Get("code_" + user.Email)
 	if err != nil {
 		c.JSON(http.StatusForbidden, errorResponse(ErrCodeExpired))
 		return
@@ -134,16 +157,15 @@ func (h *handlerV1) Verify(c *gin.Context) {
 		return
 	}
 
-	err = h.storage.User().Activate(user.ID)
+	result, err := h.storage.User().Create(&user)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, errorResponse(err))
 		return
 	}
 
 	token, _, err := utils.CreateToken(&utils.TokenParams{
-		UserID:   user.ID,
-		Username: user.Username,
-		Email:    user.Email,
+		UserID:   result.ID,
+		Email:    result.Email,
 		Duration: time.Hour * 24,
 	})
 	if err != nil {
@@ -152,13 +174,12 @@ func (h *handlerV1) Verify(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusCreated, models.AuthResponse{
-		ID:          user.ID,
-		FirstName:   user.FirstName,
-		LastName:    user.LastName,
-		Email:       user.Email,
-		Username:    user.Username,
-		Type:        user.Type,
-		CreatedAt:   user.CreatedAt,
+		ID:          result.ID,
+		FirstName:   result.FirstName,
+		LastName:    result.LastName,
+		Email:       result.Email,
+		Type:        result.Type,
+		CreatedAt:   result.CreatedAt,
 		AccessToken: token,
 	})
 }
@@ -194,10 +215,6 @@ func (h *handlerV1) Login(c *gin.Context) {
 		return
 	}
 
-	if !result.IsActive {
-		c.JSON(http.StatusForbidden, errorResponse(ErrUserNotVerified))
-	}
-
 	err = utils.CheckPassword(req.Password, result.Password)
 	if err != nil {
 		c.JSON(http.StatusForbidden, errorResponse(ErrWrongEmailOrPass))
@@ -206,7 +223,6 @@ func (h *handlerV1) Login(c *gin.Context) {
 
 	token, _, err := utils.CreateToken(&utils.TokenParams{
 		UserID:   result.ID,
-		Username: result.Username,
 		Email:    result.Email,
 		Duration: time.Hour * 24,
 	})
@@ -220,7 +236,6 @@ func (h *handlerV1) Login(c *gin.Context) {
 		FirstName:   result.FirstName,
 		LastName:    result.LastName,
 		Email:       result.Email,
-		Username:    result.Username,
 		Type:        result.Type,
 		CreatedAt:   result.CreatedAt,
 		AccessToken: token,

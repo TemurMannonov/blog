@@ -15,11 +15,10 @@ type User struct {
 	Email           string
 	Gender          *string
 	Password        string
-	Username        string
+	Username        *string
 	ProfileImageUrl *string
 	Type            string
 	CreatedAt       time.Time
-	IsActive        bool
 }
 
 type GetAllUsersParams struct {
@@ -35,7 +34,6 @@ type GetAllUsersResult struct {
 
 type UserStorageI interface {
 	Create(u *User) (*User, error)
-	Activate(id int64) error
 	Get(id int64) (*User, error)
 	GetByEmail(email string) (*User, error)
 	GetAll(params *GetAllUsersParams) (*GetAllUsersResult, error)
