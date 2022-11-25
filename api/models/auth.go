@@ -29,3 +29,11 @@ type VerifyRequest struct {
 	Email string `json:"email" binding:"required,email"`
 	Code  string `json:"code" binding:"required"`
 }
+
+type ForgotPasswordRequest struct {
+	Email string `json:"email" binding:"required,email"`
+}
+
+type UpdatePasswordRequest struct {
+	Password string `json:"password" binding:"required"`
+}

@@ -4,10 +4,9 @@ import (
 	"errors"
 	"time"
 
+	"github.com/TemurMannonov/blog/config"
 	"github.com/golang-jwt/jwt"
 )
-
-const SecretKey = "asdfasd"
 
 type TokenParams struct {
 	UserID   int64
@@ -17,25 +16,25 @@ type TokenParams struct {
 }
 
 // CreateToken creates a new token
-func CreateToken(params *TokenParams) (string, *Payload, error) {
+func CreateToken(cfg *config.Config, params *TokenParams) (string, *Payload, error) {
 	payload, err := NewPayload(params)
 	if err != nil {
 		return "", payload, err
 	}
 
 	jwtToken := jwt.NewWithClaims(jwt.SigningMethodHS256, payload)
-	token, err := jwtToken.SignedString([]byte(SecretKey))
+	token, err := jwtToken.SignedString([]byte(cfg.AuthSecretKey))
 	return token, payload, err
 }
 
 // VerifyToken checks if the token is valid or not
-func VerifyToken(token string) (*Payload, error) {
+func VerifyToken(cfg *config.Config, token string) (*Payload, error) {
 	keyFunc := func(token *jwt.Token) (interface{}, error) {
 		_, ok := token.Method.(*jwt.SigningMethodHMAC)
 		if !ok {
 			return nil, ErrInvalidToken
 		}
-		return []byte(SecretKey), nil
+		return []byte(cfg.AuthSecretKey), nil
 	}
 
 	jwtToken, err := jwt.ParseWithClaims(token, &Payload{}, keyFunc)

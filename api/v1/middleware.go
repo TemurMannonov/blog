@@ -22,7 +22,7 @@ func (h *handlerV1) AuthMiddleware(c *gin.Context) {
 		return
 	}
 
-	payload, err := utils.VerifyToken(accessToken)
+	payload, err := utils.VerifyToken(h.cfg, accessToken)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusUnauthorized, errorResponse(err))
 		return

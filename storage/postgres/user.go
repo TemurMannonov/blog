@@ -214,3 +214,14 @@ func (ur *userRepo) GetByEmail(email string) (*repo.User, error) {
 
 	return &result, nil
 }
+
+func (ur *userRepo) UpdatePassword(req *repo.UpdatePassword) error {
+	query := `UPDATE users SET password=$1 WHERE id=$2`
+
+	_, err := ur.db.Exec(query, req.Password, req.UserID)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}

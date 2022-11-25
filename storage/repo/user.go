@@ -32,9 +32,15 @@ type GetAllUsersResult struct {
 	Count int32
 }
 
+type UpdatePassword struct {
+	UserID   int64
+	Password string
+}
+
 type UserStorageI interface {
 	Create(u *User) (*User, error)
 	Get(id int64) (*User, error)
 	GetByEmail(email string) (*User, error)
 	GetAll(params *GetAllUsersParams) (*GetAllUsersResult, error)
+	UpdatePassword(req *UpdatePassword) error
 }

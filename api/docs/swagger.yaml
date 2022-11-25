@@ -93,6 +93,13 @@ definitions:
       error:
         type: string
     type: object
+  models.ForgotPasswordRequest:
+    properties:
+      email:
+        type: string
+    required:
+    - email
+    type: object
   models.GetAllCategoriesResponse:
     properties:
       categories:
@@ -180,6 +187,13 @@ definitions:
       message:
         type: string
     type: object
+  models.UpdatePasswordRequest:
+    properties:
+      password:
+        type: string
+    required:
+    - password
+    type: object
   models.User:
     properties:
       created_at:
@@ -220,6 +234,32 @@ info:
   title: Swagger for blog api
   version: "1.0"
 paths:
+  /auth/forgot-password:
+    post:
+      consumes:
+      - application/json
+      description: Forgot password
+      parameters:
+      - description: Data
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/models.ForgotPasswordRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.ResponseOK'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      summary: Forgot password
+      tags:
+      - auth
   /auth/login:
     post:
       consumes:
@@ -272,6 +312,34 @@ paths:
       summary: Register a user
       tags:
       - auth
+  /auth/update-password:
+    post:
+      consumes:
+      - application/json
+      description: Update password
+      parameters:
+      - description: Data
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/models.UpdatePasswordRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.ResponseOK'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Update password
+      tags:
+      - auth
   /auth/verify:
     post:
       consumes:
@@ -296,6 +364,32 @@ paths:
           schema:
             $ref: '#/definitions/models.ErrorResponse'
       summary: Verify user
+      tags:
+      - auth
+  /auth/verify-forgot-password:
+    post:
+      consumes:
+      - application/json
+      description: Verify forgot password
+      parameters:
+      - description: Data
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/models.VerifyRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.AuthResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      summary: Verify forgot password
       tags:
       - auth
   /categories:
