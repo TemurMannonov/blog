@@ -28,6 +28,36 @@ definitions:
       title:
         type: string
     type: object
+  models.Comment:
+    properties:
+      created_at:
+        type: string
+      description:
+        type: string
+      id:
+        type: integer
+      post_id:
+        type: integer
+      updated_at:
+        type: string
+      user:
+        $ref: '#/definitions/models.CommentUser'
+      user_id:
+        type: integer
+    type: object
+  models.CommentUser:
+    properties:
+      email:
+        type: string
+      first_name:
+        type: string
+      id:
+        type: integer
+      last_name:
+        type: string
+      profile_image_url:
+        type: string
+    type: object
   models.CreateCategoryRequest:
     properties:
       title:
@@ -35,6 +65,16 @@ definitions:
         type: string
     required:
     - title
+    type: object
+  models.CreateCommentRequest:
+    properties:
+      description:
+        type: string
+      post_id:
+        type: integer
+    required:
+    - description
+    - post_id
     type: object
   models.CreatePostRequest:
     properties:
@@ -46,8 +86,6 @@ definitions:
         type: string
       title:
         type: string
-      user_id:
-        type: integer
     type: object
   models.CreateUserRequest:
     properties:
@@ -105,6 +143,15 @@ definitions:
       categories:
         items:
           $ref: '#/definitions/models.Category'
+        type: array
+      count:
+        type: integer
+    type: object
+  models.GetAllCommentsResponse:
+    properties:
+      comments:
+        items:
+          $ref: '#/definitions/models.Comment'
         type: array
       count:
         type: integer
@@ -477,6 +524,69 @@ paths:
       summary: Get category by id
       tags:
       - category
+  /comments:
+    get:
+      consumes:
+      - application/json
+      description: Get all comments
+      parameters:
+      - default: 10
+        in: query
+        name: limit
+        required: true
+        type: integer
+      - default: 1
+        in: query
+        name: page
+        required: true
+        type: integer
+      - in: query
+        name: post_id
+        type: integer
+      - in: query
+        name: user_id
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.GetAllCommentsResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      summary: Get all comments
+      tags:
+      - comment
+    post:
+      consumes:
+      - application/json
+      description: Create a comment
+      parameters:
+      - description: comment
+        in: body
+        name: comment
+        required: true
+        schema:
+          $ref: '#/definitions/models.CreateCommentRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.Comment'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Create a comment
+      tags:
+      - comment
   /file-upload:
     post:
       consumes:

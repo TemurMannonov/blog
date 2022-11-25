@@ -56,9 +56,13 @@ func (h *handlerV1) CreatePost(c *gin.Context) {
 
 	err := c.ShouldBindJSON(&req)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, models.ErrorResponse{
-			Error: err.Error(),
-		})
+		c.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+
+	payload, err := h.GetAuthPayload(c)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, errorResponse(err))
 		return
 	}
 
@@ -66,13 +70,11 @@ func (h *handlerV1) CreatePost(c *gin.Context) {
 		Title:       req.Title,
 		Description: req.Description,
 		ImageUrl:    req.ImageUrl,
-		UserID:      req.UserID,
+		UserID:      payload.UserID,
 		CategoryID:  req.CategoryID,
 	})
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, models.ErrorResponse{
-			Error: err.Error(),
-		})
+		c.JSON(http.StatusInternalServerError, errorResponse(err))
 		return
 	}
 

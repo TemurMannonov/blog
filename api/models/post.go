@@ -18,7 +18,6 @@ type CreatePostRequest struct {
 	Title       string  `json:"title"`
 	Description string  `json:"description"`
 	ImageUrl    *string `json:"image_url"`
-	UserID      int64   `json:"user_id"`
 	CategoryID  int64   `json:"category_id"`
 }
 
