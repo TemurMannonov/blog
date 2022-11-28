@@ -76,7 +76,7 @@ definitions:
     - description
     - post_id
     type: object
-  models.CreateLikeRequest:
+  models.CreateOrUpdateLikeRequest:
     properties:
       post_id:
         type: integer
@@ -84,7 +84,6 @@ definitions:
         type: boolean
     required:
     - post_id
-    - status
     type: object
   models.CreatePostRequest:
     properties:
@@ -646,14 +645,14 @@ paths:
     post:
       consumes:
       - application/json
-      description: Create like
+      description: Create or update like
       parameters:
       - description: like
         in: body
         name: like
         required: true
         schema:
-          $ref: '#/definitions/models.CreateLikeRequest'
+          $ref: '#/definitions/models.CreateOrUpdateLikeRequest'
       produces:
       - application/json
       responses:
@@ -667,7 +666,7 @@ paths:
             $ref: '#/definitions/models.ErrorResponse'
       security:
       - ApiKeyAuth: []
-      summary: Create like
+      summary: Create or update like
       tags:
       - like
   /likes/user-post:

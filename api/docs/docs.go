@@ -535,7 +535,7 @@ const docTemplate = `{
                         "ApiKeyAuth": []
                     }
                 ],
-                "description": "Create like",
+                "description": "Create or update like",
                 "consumes": [
                     "application/json"
                 ],
@@ -545,7 +545,7 @@ const docTemplate = `{
                 "tags": [
                     "like"
                 ],
-                "summary": "Create like",
+                "summary": "Create or update like",
                 "parameters": [
                     {
                         "description": "like",
@@ -553,7 +553,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/models.CreateLikeRequest"
+                            "$ref": "#/definitions/models.CreateOrUpdateLikeRequest"
                         }
                     }
                 ],
@@ -1021,11 +1021,10 @@ const docTemplate = `{
                 }
             }
         },
-        "models.CreateLikeRequest": {
+        "models.CreateOrUpdateLikeRequest": {
             "type": "object",
             "required": [
-                "post_id",
-                "status"
+                "post_id"
             ],
             "properties": {
                 "post_id": {

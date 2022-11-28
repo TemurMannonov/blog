@@ -1,6 +1,9 @@
 package postgres
 
 import (
+	"database/sql"
+	"errors"
+
 	"github.com/TemurMannonov/blog/storage/repo"
 	"github.com/jmoiron/sqlx"
 )
@@ -15,25 +18,34 @@ func NewLike(db *sqlx.DB) repo.LikeStorageI {
 	}
 }
 
-func (lr *likeRepo) Create(l *repo.Like) (*repo.Like, error) {
-	query := `
-		INSERT INTO likes(user_id, post_id, status) 
-		VALUES($1, $2, $3) RETURNING id
-	`
+func (lr *likeRepo) CreateOrUpdate(l *repo.Like) error {
+	like, err := lr.Get(l.UserID, l.PostID)
+	if errors.Is(err, sql.ErrNoRows) {
+		query := `
+			INSERT INTO likes(user_id, post_id, status) 
+			VALUES($1, $2, $3) RETURNING id
+		`
 
-	row := lr.db.QueryRow(
-		query,
-		l.UserID,
-		l.PostID,
-		l.Status,
-	)
-
-	err := row.Scan(&l.ID)
-	if err != nil {
-		return nil, err
+		_, err := lr.db.Exec(query, l.UserID, l.PostID, l.Status)
+		if err != nil {
+			return err
+		}
+	} else if like != nil {
+		if like.Status == l.Status {
+			_, err := lr.db.Exec(`DELETE FROM likes WHERE id=$1`, like.ID)
+			if err != nil {
+				return err
+			}
+		} else {
+			query := `UPDATE likes SET status=$1 WHERE id=$2`
+			_, err := lr.db.Exec(query, l.Status, like.ID)
+			if err != nil {
+				return err
+			}
+		}
 	}
 
-	return l, nil
+	return nil
 }
 
 func (cr *likeRepo) Get(userID, postID int64) (*repo.Like, error) {

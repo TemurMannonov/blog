@@ -52,6 +52,11 @@ func (pr *postRepo) Create(post *repo.Post) (*repo.Post, error) {
 func (pr *postRepo) Get(id int64) (*repo.Post, error) {
 	var result repo.Post
 
+	_, err := pr.db.Exec("UPDATE posts SET views_count=views_count+1 WHERE id=$1", id)
+	if err != nil {
+		return nil, err
+	}
+
 	query := `
 		SELECT
 			id,
@@ -68,7 +73,7 @@ func (pr *postRepo) Get(id int64) (*repo.Post, error) {
 	`
 
 	row := pr.db.QueryRow(query, id)
-	err := row.Scan(
+	err = row.Scan(
 		&result.ID,
 		&result.Title,
 		&result.Description,
