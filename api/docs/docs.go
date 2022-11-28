@@ -528,6 +528,94 @@ const docTemplate = `{
                 }
             }
         },
+        "/likes": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Create like",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "like"
+                ],
+                "summary": "Create like",
+                "parameters": [
+                    {
+                        "description": "like",
+                        "name": "like",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.CreateLikeRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/models.Like"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/likes/user-post": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Get like by user and post",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "like"
+                ],
+                "summary": "Get like by user and post",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Post ID",
+                        "name": "post_id",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.Like"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/posts": {
             "get": {
                 "description": "Get all posts",
@@ -933,6 +1021,21 @@ const docTemplate = `{
                 }
             }
         },
+        "models.CreateLikeRequest": {
+            "type": "object",
+            "required": [
+                "post_id",
+                "status"
+            ],
+            "properties": {
+                "post_id": {
+                    "type": "integer"
+                },
+                "status": {
+                    "type": "boolean"
+                }
+            }
+        },
         "models.CreatePostRequest": {
             "type": "object",
             "properties": {
@@ -1078,6 +1181,23 @@ const docTemplate = `{
                 }
             }
         },
+        "models.Like": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "post_id": {
+                    "type": "integer"
+                },
+                "status": {
+                    "type": "boolean"
+                },
+                "user_id": {
+                    "type": "integer"
+                }
+            }
+        },
         "models.LoginRequest": {
             "type": "object",
             "required": [
@@ -1113,6 +1233,9 @@ const docTemplate = `{
                 "image_url": {
                     "type": "string"
                 },
+                "like_info": {
+                    "$ref": "#/definitions/models.PostLikeInfo"
+                },
                 "title": {
                     "type": "string"
                 },
@@ -1123,6 +1246,17 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "views_count": {
+                    "type": "integer"
+                }
+            }
+        },
+        "models.PostLikeInfo": {
+            "type": "object",
+            "properties": {
+                "dislikes_count": {
+                    "type": "integer"
+                },
+                "likes_count": {
                     "type": "integer"
                 }
             }

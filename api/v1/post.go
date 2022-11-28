@@ -29,13 +29,22 @@ func (h *handlerV1) GetPost(c *gin.Context) {
 
 	resp, err := h.storage.Post().Get(int64(id))
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, models.ErrorResponse{
-			Error: err.Error(),
-		})
+		c.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+	post := parsePostModel(resp)
+
+	likesInfo, err := h.storage.Like().GetLikesDislikesCount(post.ID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, errorResponse(err))
 		return
 	}
 
-	post := parsePostModel(resp)
+	post.LikeInfo = &models.PostLikeInfo{
+		LikesCount:    likesInfo.LikesCount,
+		DislikesCount: likesInfo.DislikesCount,
+	}
+
 	c.JSON(http.StatusOK, post)
 }
 

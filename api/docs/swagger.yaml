@@ -76,6 +76,16 @@ definitions:
     - description
     - post_id
     type: object
+  models.CreateLikeRequest:
+    properties:
+      post_id:
+        type: integer
+      status:
+        type: boolean
+    required:
+    - post_id
+    - status
+    type: object
   models.CreatePostRequest:
     properties:
       category_id:
@@ -174,6 +184,17 @@ definitions:
       count:
         type: integer
     type: object
+  models.Like:
+    properties:
+      id:
+        type: integer
+      post_id:
+        type: integer
+      status:
+        type: boolean
+      user_id:
+        type: integer
+    type: object
   models.LoginRequest:
     properties:
       email:
@@ -198,6 +219,8 @@ definitions:
         type: integer
       image_url:
         type: string
+      like_info:
+        $ref: '#/definitions/models.PostLikeInfo'
       title:
         type: string
       updated_at:
@@ -205,6 +228,13 @@ definitions:
       user_id:
         type: integer
       views_count:
+        type: integer
+    type: object
+  models.PostLikeInfo:
+    properties:
+      dislikes_count:
+        type: integer
+      likes_count:
         type: integer
     type: object
   models.RegisterRequest:
@@ -612,6 +642,61 @@ paths:
       summary: File upload
       tags:
       - file-upload
+  /likes:
+    post:
+      consumes:
+      - application/json
+      description: Create like
+      parameters:
+      - description: like
+        in: body
+        name: like
+        required: true
+        schema:
+          $ref: '#/definitions/models.CreateLikeRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.Like'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Create like
+      tags:
+      - like
+  /likes/user-post:
+    get:
+      consumes:
+      - application/json
+      description: Get like by user and post
+      parameters:
+      - description: Post ID
+        in: query
+        name: post_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Like'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Get like by user and post
+      tags:
+      - like
   /posts:
     get:
       consumes:
