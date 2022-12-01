@@ -492,6 +492,11 @@ const docTemplate = `{
         },
         "/file-upload": {
             "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
                 "description": "File upload",
                 "consumes": [
                     "application/json"

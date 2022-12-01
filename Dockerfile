@@ -19,11 +19,13 @@ RUN curl -L https://github.com/golang-migrate/migrate/releases/download/v4.15.2/
 FROM alpine:3.16
 
 WORKDIR /app
+RUN mkdir media
 
 # copying main binary file to workdir
 COPY --from=builder /app/main .
 COPY --from=builder /app/migrate ./migrate
 COPY migrations ./migrations
+COPY templates ./templates
 
 EXPOSE 8000
 

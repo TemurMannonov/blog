@@ -1,0 +1,46 @@
+version: "3.8"
+
+services:
+  postgres:
+    image: postgres:15.1
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DATABASE}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - media:/app/media
+    ports:
+      - 5432:5432
+
+  redis:
+    image: redis:latest
+  
+  blog:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - POSTGRES_HOST=${POSTGRES_HOST}
+      - POSTGRES_PORT=${POSTGRES_PORT}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DATABASE=${POSTGRES_DATABASE}
+
+      - HTTP_PORT=${HTTP_PORT}
+
+      - SMTP_SENDER=${SMTP_SENDER}
+      - SMTP_PASSWORD=${SMTP_PASSWORD}
+
+      - REDIS_ADDR=${REDIS_ADDR}
+
+      - AUTH_SECRET_KEY=${AUTH_SECRET_KEY}
+    depends_on:
+      - postgres
+    restart: always
+
+volumes:
+  pgdata:
+  media:
