@@ -12,6 +12,7 @@ type TokenParams struct {
 	UserID   int64
 	Username string
 	Email    string
+	UserType string
 	Duration time.Duration
 }
 

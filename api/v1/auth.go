@@ -15,14 +15,6 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-var (
-	ErrWrongEmailOrPass = errors.New("wrong email or password")
-	ErrEmailExists      = errors.New("email already exists")
-	ErrUserNotVerified  = errors.New("user not verified")
-	ErrIncorrectCode    = errors.New("incorrect verification code")
-	ErrCodeExpired      = errors.New("verification code has been expired")
-)
-
 const (
 	RegisterCodeKey   = "register_code_"
 	ForgotPasswordKey = "forgot_password_code_"
@@ -171,6 +163,7 @@ func (h *handlerV1) Verify(c *gin.Context) {
 	token, _, err := utils.CreateToken(h.cfg, &utils.TokenParams{
 		UserID:   result.ID,
 		Email:    result.Email,
+		UserType: result.Type,
 		Duration: time.Hour * 24,
 	})
 	if err != nil {
@@ -229,6 +222,7 @@ func (h *handlerV1) Login(c *gin.Context) {
 	token, _, err := utils.CreateToken(h.cfg, &utils.TokenParams{
 		UserID:   result.ID,
 		Email:    result.Email,
+		UserType: result.Type,
 		Duration: time.Hour * 24,
 	})
 	if err != nil {

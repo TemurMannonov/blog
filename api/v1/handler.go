@@ -1,12 +1,22 @@
 package v1
 
 import (
+	"errors"
 	"strconv"
 
 	"github.com/TemurMannonov/blog/api/models"
 	"github.com/TemurMannonov/blog/config"
 	"github.com/TemurMannonov/blog/storage"
 	"github.com/gin-gonic/gin"
+)
+
+var (
+	ErrWrongEmailOrPass = errors.New("wrong email or password")
+	ErrEmailExists      = errors.New("email already exists")
+	ErrUserNotVerified  = errors.New("user not verified")
+	ErrIncorrectCode    = errors.New("incorrect verification code")
+	ErrCodeExpired      = errors.New("verification code has been expired")
+	ErrForbidden        = errors.New("forbidden")
 )
 
 type handlerV1 struct {

@@ -60,7 +60,18 @@ func (h *handlerV1) CreateCategory(c *gin.Context) {
 		req models.CreateCategoryRequest
 	)
 
-	err := c.ShouldBindJSON(&req)
+	payload, err := h.GetAuthPayload(c)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+
+	if payload.UserType != repo.UserTypeSuperadmin {
+		c.JSON(http.StatusForbidden, errorResponse(ErrForbidden))
+		return
+	}
+
+	err = c.ShouldBindJSON(&req)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, errorResponse(err))
 		return
@@ -142,7 +153,18 @@ func (h *handlerV1) UpdateCategory(c *gin.Context) {
 		req models.CreateCategoryRequest
 	)
 
-	err := c.ShouldBindJSON(&req)
+	payload, err := h.GetAuthPayload(c)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+
+	if payload.UserType != repo.UserTypeSuperadmin {
+		c.JSON(http.StatusForbidden, errorResponse(ErrForbidden))
+		return
+	}
+
+	err = c.ShouldBindJSON(&req)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, errorResponse(err))
 		return
@@ -186,6 +208,17 @@ func (h *handlerV1) UpdateCategory(c *gin.Context) {
 // @Failure 400 {object} models.ErrorResponse
 // @Failure 500 {object} models.ErrorResponse
 func (h *handlerV1) DeleteCategory(c *gin.Context) {
+	payload, err := h.GetAuthPayload(c)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+
+	if payload.UserType != repo.UserTypeSuperadmin {
+		c.JSON(http.StatusForbidden, errorResponse(ErrForbidden))
+		return
+	}
+
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, errorResponse(err))
