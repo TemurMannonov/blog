@@ -47,6 +47,8 @@ func New(opt *RouterOptions) *gin.Engine {
 	apiV1.GET("/categories/:id", handlerV1.GetCategory)
 	apiV1.POST("/categories", handlerV1.AuthMiddleware, handlerV1.CreateCategory)
 	apiV1.GET("/categories", handlerV1.GetAllCategories)
+	apiV1.PUT("/categories/:id", handlerV1.UpdateCategory)
+	apiV1.DELETE("/categories/:id", handlerV1.DeleteCategory)
 
 	apiV1.GET("/posts/:id", handlerV1.GetPost)
 	apiV1.POST("/posts", handlerV1.AuthMiddleware, handlerV1.CreatePost)

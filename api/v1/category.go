@@ -1,6 +1,8 @@
 package v1
 
 import (
+	"database/sql"
+	"errors"
 	"net/http"
 	"strconv"
 
@@ -27,6 +29,11 @@ func (h *handlerV1) GetCategory(c *gin.Context) {
 
 	resp, err := h.storage.Category().Get(int64(id))
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			c.JSON(http.StatusNotFound, errorResponse(err))
+			return
+		}
+
 		c.JSON(http.StatusInternalServerError, errorResponse(err))
 		return
 	}
@@ -116,4 +123,86 @@ func getCategoriesResponse(data *repo.GetAllCategoriesResult) *models.GetAllCate
 	}
 
 	return &response
+}
+
+// @Security ApiKeyAuth
+// @Router /categories/{id} [put]
+// @Summary Update a category
+// @Description Update a category
+// @Tags category
+// @Accept json
+// @Produce json
+// @Param id path int true "ID"
+// @Param category body models.CreateCategoryRequest true "Category"
+// @Success 200 {object} models.Category
+// @Failure 400 {object} models.ErrorResponse
+// @Failure 500 {object} models.ErrorResponse
+func (h *handlerV1) UpdateCategory(c *gin.Context) {
+	var (
+		req models.CreateCategoryRequest
+	)
+
+	err := c.ShouldBindJSON(&req)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+
+	resp, err := h.storage.Category().Update(&repo.Category{
+		ID:    int64(id),
+		Title: req.Title,
+	})
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			c.JSON(http.StatusNotFound, errorResponse(err))
+			return
+		}
+		c.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+
+	c.JSON(http.StatusOK, models.Category{
+		ID:        resp.ID,
+		Title:     resp.Title,
+		CreatedAt: resp.CreatedAt,
+	})
+}
+
+// @Security ApiKeyAuth
+// @Router /categories/{id} [delete]
+// @Summary Delete a category
+// @Description Delete a category
+// @Tags category
+// @Accept json
+// @Produce json
+// @Param id path int true "ID"
+// @Success 200 {object} models.ResponseOK
+// @Failure 400 {object} models.ErrorResponse
+// @Failure 500 {object} models.ErrorResponse
+func (h *handlerV1) DeleteCategory(c *gin.Context) {
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+
+	err = h.storage.Category().Delete(int64(id))
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			c.JSON(http.StatusNotFound, errorResponse(err))
+			return
+		}
+		c.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+
+	c.JSON(http.StatusOK, models.ResponseOK{
+		Message: "Successfully deleted",
+	})
 }

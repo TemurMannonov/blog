@@ -20,7 +20,9 @@ type GetAllCategoriesResult struct {
 }
 
 type CategoryStorageI interface {
-	Create(u *Category) (*Category, error)
+	Create(c *Category) (*Category, error)
 	Get(id int64) (*Category, error)
 	GetAll(params *GetAllCategoriesParams) (*GetAllCategoriesResult, error)
+	Update(c *Category) (*Category, error)
+	Delete(id int64) error
 }
