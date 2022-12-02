@@ -40,9 +40,10 @@ func New(opt *RouterOptions) *gin.Engine {
 
 	apiV1 := router.Group("/v1")
 
-	apiV1.GET("/users/:id", handlerV1.AuthMiddleware, handlerV1.GetUser)
+	apiV1.GET("/users/:id", handlerV1.GetUser)
 	apiV1.POST("/users", handlerV1.AuthMiddleware, handlerV1.CreateUser)
-	apiV1.GET("/users", handlerV1.AuthMiddleware, handlerV1.GetAllUsers)
+	apiV1.GET("/users", handlerV1.GetAllUsers)
+	apiV1.GET("/users/me", handlerV1.AuthMiddleware, handlerV1.GetUserProfile)
 
 	apiV1.GET("/categories/:id", handlerV1.GetCategory)
 	apiV1.POST("/categories", handlerV1.AuthMiddleware, handlerV1.CreateCategory)

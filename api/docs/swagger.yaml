@@ -892,8 +892,6 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/models.ErrorResponse'
-      security:
-      - ApiKeyAuth: []
       summary: Get all users
       tags:
       - user
@@ -947,6 +945,27 @@ paths:
           schema:
             $ref: '#/definitions/models.ErrorResponse'
       summary: Get user by id
+      tags:
+      - user
+  /users/me:
+    get:
+      consumes:
+      - application/json
+      description: Get user by token
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.User'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Get user by token
       tags:
       - user
 securityDefinitions:
