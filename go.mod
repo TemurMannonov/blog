@@ -4,6 +4,7 @@ go 1.19
 
 require (
 	github.com/bxcodec/faker/v4 v4.0.0-beta.3
+	github.com/gin-contrib/cors v1.4.0
 	github.com/gin-gonic/gin v1.8.1
 	github.com/go-redis/redis/v9 v9.0.0-rc.1
 	github.com/golang-jwt/jwt v3.2.2+incompatible
