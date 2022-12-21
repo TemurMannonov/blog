@@ -22,7 +22,6 @@ type RouterOptions struct {
 // @title           Swagger for blog api
 // @version         1.0
 // @description     This is a blog service api.
-// @host      localhost:8000
 // @BasePath  /v1
 // @securityDefinitions.apikey ApiKeyAuth
 // @in header
